@@ -165,8 +165,20 @@ class LTI {
    * @see http://codex.wordpress.org/Function_Reference/add_meta_box
    */
   public static function add_meta_boxes() {
+    add_meta_box('api_endpoint_info', 'API URL', array( __CLASS__, 'api_endpoint_info_meta' ), 'lti_consumer', 'normal' );
     add_meta_box('consumer_secret', 'Consumer Secret', array( __CLASS__, 'consumer_secret_meta'), 'lti_consumer', 'normal' );
     add_meta_box('consumer_key', 'Consumer Key', array( __CLASS__, 'consumer_key_meta'), 'lti_consumer', 'normal' );
+  }
+
+  /**
+   * Callback for add_meta_box().
+   */
+  public static function api_endpoint_info_meta( $post ) {
+    global $wpdb;
+    echo '<p>';
+    _e( 'Your API endpoint can be accessed via the following URL.' );
+    echo '<h3>' . get_site_url(1) . '/api/lti/' . $wpdb->blogid. '</h3>';
+    echo '</p>';
   }
 
   /**
