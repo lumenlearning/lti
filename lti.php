@@ -187,9 +187,6 @@ class LTI {
    * @see http://codex.wordpress.org/Function_Reference/add_meta_box
    */
   public static function consumer_secret_meta( $post ) {
-    // Add a nonce field so we can check for it later.
-    wp_nonce_field( 'lti_consumer', 'lti_consumer_nonce');
-
     // Use get_post_meta to retrieve an existing value from the database.
     $secret = get_post_meta( $post->ID, LTI_META_SECRET_NAME, true);
 
@@ -321,18 +318,6 @@ class LTI {
    * expose this part of the UI workflow at all.
    */
   public static function save( $post_id ) {
-    // Check if our nonce is set
-    if ( ! isset( $_POST['lti_consumer_nonce'] ) ) {
-      return $post_id;
-    }
-
-    $nonce = $_POST['lti_consumer_nonce'];
-
-    // Verify the nonce is valid
-    if ( ! wp_verify_nonce($nonce, 'lti_consumer' ) ) {
-      return $post_id;
-    }
-
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
       return $post_id;
     }
