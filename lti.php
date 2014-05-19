@@ -224,48 +224,6 @@ class LTI {
   }
 
   /**
-   * Create a new post.
-   *
-   * lti_consumer posts really have no user editable data so this helps by
-   * managing all the programmatic pieces so we can just pass the $author_id the
-   * post should be created on behalf of.
-   */
-  public static function create( $author_id = NULL ) {
-    // default to current user (or admin) if none provided
-    if ( $author_id == NULL ) {
-      $user = wp_get_current_user();
-      if ( 0 == $user->ID ) {
-        // User is not logged in, refuse to create
-        return FALSE;
-      }
-    }
-    else {
-      $user = get_userdata( $author_id );
-    }
-
-    $post = array(
-      'post_content'          => '',
-      'post_name'             => '',
-      'post_title'            => 'LTI: ' . $user->display_name,
-      'post_status'           => 'private',
-      'post_type'             => 'lti_consumer',
-      'post_author'           => $user->ID,
-      'ping_status'           => 'closed',
-      'post_password'         => '',
-      'post_excerpt'          => '',
-      'import_id'             => '',
-      'comment_status'        => 'closed',
-    );
-    $post_id = wp_insert_post($post, false);
-
-    // Now attach our key/secret metadata
-    if ( ! empty($post_id) ) {
-      update_post_meta($post_id, LTI_META_KEY_NAME, LTI::generateToken('key'));
-      update_post_meta($post_id, LTI_META_SECRET_NAME, LTI::generateToken('secret'));
-    }
-  }
-
-  /**
    * Create a new random token
    *
    * We pass through sha1() to return a 40 character token.
