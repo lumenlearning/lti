@@ -191,7 +191,7 @@ class LTI {
     $secret = get_post_meta( $post->ID, LTI_META_SECRET_NAME, true);
 
     if ( empty($secret) ) {
-      $secret = translate('Secret will be generated when post is saved.');
+      $secret = __('Secret will be generated when post is saved.');
     }
 
     // Display the form, using the current value.
@@ -212,7 +212,7 @@ class LTI {
     $key = get_post_meta( $post->ID, LTI_META_KEY_NAME, true);
 
     if ( empty( $key ) ) {
-      $key = translate('Key will be generated when post is saved.');
+      $key = __('Key will be generated when post is saved.');
     }
 
     // Display the form, using the current value.
