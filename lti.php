@@ -194,18 +194,14 @@ class LTI {
     $secret = get_post_meta( $post->ID, LTI_META_SECRET_NAME, true);
 
     if ( empty($secret) ) {
-      $secret = LTI::generateToken('secret');
+      $secret = translate('Secret will be generated when post is saved.');
     }
 
     // Display the form, using the current value.
     echo '<label for="lti_consumer_secret">';
     _e( 'Consumer secret used for signing LTI requests.' );
     echo '</label>';
-    echo '<input type="text" id="lti_consumer_secret" name="lti_consumer_secret"';
-    if ( ! is_admin() ) {
-      echo ' disabled="disabled"';
-    }
-    echo ' value="' . esc_attr( $secret ) . '" size="40" />';
+    echo '<h3 id="lti_consumer_secret" name="lti_consumer_secret">' . esc_attr( $secret ) . '</h3>';
 
   }
 
@@ -219,18 +215,14 @@ class LTI {
     $key = get_post_meta( $post->ID, LTI_META_KEY_NAME, true);
 
     if ( empty( $key ) ) {
-      $key = LTI::generateToken('key');
+      $key = translate('Key will be generated when post is saved.');
     }
 
     // Display the form, using the current value.
     echo '<label for="lti_consumer_key">';
     _e( 'Consumer key used for signing LTI requests.' );
     echo '</label>';
-    echo '<input type="text" id="lti_consumer_key" name="lti_consumer_key"';
-    if ( ! is_admin() ) {
-      echo ' disabled="disabled"';
-    }
-    echo ' value="' . esc_attr( $key ) . '" size="40" />';
+    echo '<h3 id="lti_consumer_key" name="lti_consumer_key">' . esc_attr( $key ) . '</h3>';
 
   }
 
@@ -313,6 +305,16 @@ class LTI {
   }
 
   /**
+   * Minimum check to see if string is SHA1.
+   */
+  function is_sha1($string) {
+    if (ctype_xdigit($string) && strlen($string) == 40) {
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
    * Save a post submitted via form.
    *
    * This is here for completeness, but likely needs review to see if we want to
@@ -346,9 +348,16 @@ class LTI {
       }
     }
 
-    // Save to save data now
-    update_post_meta( $post_id, LTI_META_KEY_NAME, $_POST['lti_consumer_key'] );
-    update_post_meta( $post_id, LTI_META_SECRET_NAME, $_POST['lti_consumer_secret'] );
+    // Generate and save our key/secret if necessary.
+    $key = get_post_meta( $post_id, LTI_META_KEY_NAME, true);
+    if ( ! LTI::is_sha1($key) ) {
+      update_post_meta( $post_id, LTI_META_KEY_NAME, LTI::generateToken('key') );
+    }
+
+    $secret = get_post_meta( $post_id, LTI_META_SECRET_NAME, true);
+    if ( ! LTI::is_sha1($secret) ) {
+      update_post_meta( $post_id, LTI_META_SECRET_NAME, LTI::generateToken('key') );
+    }
   }
 
   /**
