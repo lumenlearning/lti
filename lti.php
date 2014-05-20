@@ -106,9 +106,9 @@ class LTI {
       id mediumint(9) NOT NULL AUTO_INCREMENT,
       noncetime datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
       noncevalue tinytext NOT NULL,
-      PRIMARY KEY  id (id)
+      PRIMARY KEY  id (id),
+      INDEX tv_idx (noncetime, noncevalue),
     );";
-
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta( $sql );
 
