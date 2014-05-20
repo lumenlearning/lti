@@ -12,8 +12,16 @@ get_header(); ?>
 	      // Start the Loop.
 	      while ( have_posts() ) {
 		      the_post();
-          global $wpdb;
+          $author_id = get_the_author_meta('ID');
+          $user = wp_get_current_user();
 
+          // Skip displaying anything if the current user is not super admin or post author.
+          if (!is_super_admin() && ($author_id != $user->ID)) {
+            // break the loop; should we redirect?
+            continue;
+          }
+
+          global $wpdb;
           $endpoint = get_site_url(1) . '/api/lti/' . $wpdb->blogid;
           echo '<div><label for="lti_consumer_endpoint">';
           _e( 'Endpoint' );
@@ -28,7 +36,6 @@ get_header(); ?>
             echo '<strong id="lti_consumer_key" name="lti_consumer_key">' . esc_attr( $key ) . '</strong>';
             echo '</div>';
 		      }
-
 
 		      if ( $secret = get_post_meta( get_the_ID(), LTI_META_SECRET_NAME, true ) ) {
             echo '<div><label for="lti_consumer_secret">';
