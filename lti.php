@@ -449,7 +449,7 @@ class LTIOAuth {
     }
 
     // We should not get here, but in case return OAUTH_BAD_NONCE.
-    // @todo log error?
+    LTI::log("Reached bad branch in timestampNonceHandler: Post data follows:\n". var_export($_POST, 1));
     return OAUTH_BAD_NONCE;
   }
 
@@ -493,7 +493,7 @@ class LTIOAuth {
           }
           else {
             // This should have resulted in valid secret.
-            // @todo log error?
+            LTI::log("Failed to find proper secret for lti consumer ID: " . $q->posts[0]->ID);
             return OAUTH_CONSUMER_KEY_UNKOWN;
           }
         }
@@ -510,7 +510,7 @@ class LTIOAuth {
     }
 
     // Not sure how we would get here, but refust the key in the event
-    // @todo log error?
+    LTI::log("Reached bad branch in consumerHandler: Post data follows:\n". var_export($_POST, 1));
     return OAUTH_CONSUMER_KEY_REFUSED;
   }
 }
