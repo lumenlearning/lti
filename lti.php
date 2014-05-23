@@ -297,26 +297,21 @@ class LTI {
       return $post_id;
     }
 
-    if ( 'lti_consumer' == $_POST['post_type']['lti_consumer'] ) {
-      if ( ! current_user_can( 'edit_page', $post_id) ) {
-        return $post_id;
-      }
-    }
-    else {
-      if ( ! current_user_can( 'edit_post', $post_id) ) {
-        return $post_id;
-      }
+    if ( ! current_user_can( 'edit_page', $post_id) ) {
+      return $post_id;
     }
 
-    // Generate and save our key/secret if necessary.
-    $key = get_post_meta( $post_id, LTI_META_KEY_NAME, true);
-    if ( ! LTI::is_sha1($key) ) {
-      update_post_meta( $post_id, LTI_META_KEY_NAME, LTI::generateToken('key') );
-    }
+    if ( 'lti_consumer' == $_POST['post_type'] ) {
+      // Generate and save our key/secret if necessary.
+      $key = get_post_meta( $post_id, LTI_META_KEY_NAME, true);
+      if ( ! LTI::is_sha1($key) ) {
+        update_post_meta( $post_id, LTI_META_KEY_NAME, LTI::generateToken('key') );
+      }
 
-    $secret = get_post_meta( $post_id, LTI_META_SECRET_NAME, true);
-    if ( ! LTI::is_sha1($secret) ) {
-      update_post_meta( $post_id, LTI_META_SECRET_NAME, LTI::generateToken('key') );
+      $secret = get_post_meta( $post_id, LTI_META_SECRET_NAME, true);
+      if ( ! LTI::is_sha1($secret) ) {
+        update_post_meta( $post_id, LTI_META_SECRET_NAME, LTI::generateToken('key') );
+      }
     }
   }
 
