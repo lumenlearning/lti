@@ -279,7 +279,7 @@ class LTI {
   /**
    * Minimum check to see if string is SHA1.
    */
-  function is_sha1($string) {
+  public static function is_sha1($string) {
     if (ctype_xdigit($string) && strlen($string) == 40) {
       return TRUE;
     }
