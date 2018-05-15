@@ -22,7 +22,7 @@ get_header(); ?>
           }
 
           global $wpdb;
-          $endpoint = get_site_url(1) . '/api/lti/BLOGID';
+          $endpoint = get_home_url(1) . '/api/lti/BLOGID';
           echo '<div><label for="lti_consumer_endpoint">';
           _e( 'Endpoint' );
           echo ': </label>';

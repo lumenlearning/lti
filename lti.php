@@ -187,7 +187,7 @@ class LTI {
     global $wpdb;
     echo '<p>';
     _e( 'Your API endpoint can be accessed via the following URL. Replace BLOGID with the site id of the site the user should be redirected to.' );
-    echo '<div>' . get_site_url(1) . '/api/lti/BLOGID</div>';
+    echo '<div>' . get_home_url(1) . '/api/lti/BLOGID</div>';
     echo '</p>';
   }
 
