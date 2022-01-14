@@ -36,6 +36,7 @@ class LTI {
     // Constants for our meta field names
     define('LTI_META_KEY_NAME', '_lti_consumer_key');
     define('LTI_META_SECRET_NAME', '_lti_consumer_secret');
+//    define('LUMEN_GUID', '_lumen_guid');
 
     // How big of a window to allow timestamps in seconds. Default 90 minutes (5400 seconds).
     define('LTI_NONCE_TIMELIMIT', 5400);
@@ -50,10 +51,15 @@ class LTI {
 
     add_action( 'admin_notices', array( __CLASS__, 'check_dependencies') );
     add_action( 'init', array( __CLASS__, 'register_post_type' ) );
+    add_action( 'init', array( __CLASS__, 'register_consumer_key') );
+    add_action( 'init', array( __CLASS__, 'register_consumer_secret') );
+    add_action( 'init', array( __CLASS__, 'register_lumen_guid' ) );
 
     add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
     add_action( 'save_post', array( __CLASS__, 'save') );
+    add_action( 'pre_get_posts', array( __CLASS__, 'pre_get_posts'), 1 );
 
+    add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
     add_filter( 'template_include', array( __CLASS__, 'template_include' ) );
 
     # API details
@@ -144,12 +150,133 @@ class LTI {
       'public' => true,
       'rewrite' => true,
       'can_export' => false,
+      'show_in_rest' => true,
+      'rest_base' => 'lti_credentials',
       'supports' => array(
         'title',
         'author',
-      ),
+      )
     );
+
+    // Hide this endpoint if user does not have "super admin" capabilities
+    if ( ! is_super_admin( $current_user->ID ) ) {
+        $args['show_in_rest'] = false;
+    }
+
     register_post_type( 'lti_consumer', $args );
+  }
+
+  /**
+   * Register our custom post type's meta data (lti key)
+   *
+   * @see https://developer.wordpress.org/reference/functions/register_rest_field/
+   */
+  public static function register_consumer_key() {
+      register_rest_field(
+          'lti_consumer',
+          '_lti_consumer_key',
+          array(
+              'get_callback' => array( __CLASS__, 'get_lti_consumer_meta'),
+              'update_callback' => array( __CLASS__, 'update_lti_consumer_meta')
+          )
+      );
+  }
+
+    /**
+     * Register our custom post type's meta data (lti key)
+     *
+     * @see https://developer.wordpress.org/reference/functions/register_rest_field/
+     */
+    public static function register_consumer_secret() {
+        register_rest_field(
+            'lti_consumer',
+            '_lti_consumer_secret',
+            array(
+                'update_callback' => array( __CLASS__, 'update_lti_consumer_meta')
+            )
+        );
+    }
+
+  /**
+   * Register our custom post type's meta data (lti key)
+   *
+   * @see https://developer.wordpress.org/reference/functions/register_rest_field/
+   */
+  public static function register_lumen_guid() {
+      register_rest_field(
+          'lti_consumer',
+          '_lumen_guid',
+          array(
+              'get_callback' => array( __CLASS__, 'get_lti_consumer_meta'),
+              'update_callback' => array( __CLASS__, 'update_lti_consumer_meta')
+          )
+      );
+  }
+
+  /**
+   * Get the value of the lti_consumer meta
+   *
+   * @param array $object
+   * @param string $field_name
+   * @param WP_REST_Request $request
+   *
+   * @return mixed
+   */
+  public static function get_lti_consumer_meta( $object, $field_name, $request ) {
+      return get_post_meta( $object['id'], $field_name, true );
+  }
+
+  /**
+   * Update the value of the lti_consumer meta
+   *
+   * @param $value
+   * @param $object
+   * @param $field_name
+   *
+   * @return bool|int|void
+   */
+  public static function update_lti_consumer_meta( $value, $object, $field_name ) {
+      if ( ! is_string( $value ) ) {
+          return;
+      }
+
+      return update_post_meta( $object->ID, $field_name, $value );
+  }
+
+
+  /**
+   * Add query variables to allow searching/sorting LTI consumers by metadata
+   *
+   * @param $query_vars
+   * @return array
+   */
+  public static function pre_get_posts( $query ) {
+      $meta_query = array();
+
+      if ( ! empty( $_GET['lumen_guid'] ) ) {
+          $meta_query[] = array( 'key' => '_lumen_guid', 'value' => $_GET['lumen_guid'] );
+      }
+
+      if (! empty( $_GET['lti_key'] ) ) {
+          $meta_query[] = array( 'key' => '_lti_consumer_key', 'value' => $_GET['lti_key'] );
+      }
+
+      if ( count( $meta_query ) > 0 ) {
+          $query->set( 'meta_query', $meta_query );
+      }
+  }
+
+  /**
+   * Add custom query variables
+   *
+   * @param $vars
+   * @return array
+   */
+  public static function add_query_vars( $vars ) {
+      $vars[] = 'lumen_guid';
+      $vars[] = 'lti_key';
+
+      return $vars;
   }
 
   /**
@@ -178,6 +305,7 @@ class LTI {
     add_meta_box('api_endpoint_info', 'API URL', array( __CLASS__, 'api_endpoint_info_meta' ), 'lti_consumer', 'normal' );
     add_meta_box('consumer_secret', 'Consumer Secret', array( __CLASS__, 'consumer_secret_meta'), 'lti_consumer', 'normal' );
     add_meta_box('consumer_key', 'Consumer Key', array( __CLASS__, 'consumer_key_meta'), 'lti_consumer', 'normal' );
+    add_meta_box('lumen_guid', 'Lumen GUID', array( __CLASS__, 'lumen_guid_meta'), 'lti_consumer', 'normal' );
   }
 
   /**
@@ -231,6 +359,26 @@ class LTI {
     echo '</label>';
     echo '<div id="lti_consumer_key" name="lti_consumer_key">' . esc_attr( $key ) . '</div>';
 
+  }
+
+  /**
+   * Callback for add_meta_box().
+   *
+   * @see http://codex.wordpress.org/Function_Reference/add_meta_box
+   */
+  public static function lumen_guid_meta( $post ) {
+      // Use get_post_meta to retrieve an existing value from the database.
+    $guid = get_post_meta( $post->ID, LUMEN_GUID, true);
+
+    if ( empty( $guid ) ) {
+      $guid = __('GUID will be generated when post is saved.');
+    }
+
+    // Display the form, using the current value.
+    echo '<label for="lumen_guid">';
+    _e( 'GUID used for identifying a school.' );
+    echo '</label>';
+    echo '<div id="lumen_guid" name="lumen_guid">' . esc_attr( $guid ) . '</div>';
   }
 
   /**
@@ -504,4 +652,3 @@ class LTIOAuth {
     return OAUTH_CONSUMER_KEY_REFUSED;
   }
 }
-
